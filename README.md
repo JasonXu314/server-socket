@@ -1,6 +1,6 @@
 ## Description
 
-A lightweight wrapper library around the native WebSocket API
+A lightweight wrapper library around the ws WebSocket API
 
 ## Installation
 
@@ -18,11 +18,16 @@ yarn add @nano-utils/web-socket
 
 ```js
 import { Socket } from '@nano-utils/web-socket';
+import WebSocket from 'ws';
 
-const socket = new Socket('wss://example.com');
+const wss = new WebSocket.Server({ port: 3000 });
 
-socket.on('MY_MESSAGE', (evt) => {
-	console.log(`Type: ${evt.type}, Foo: ${evt.foo}`); // Type: MY_MESSAGE, Foo: something
+wss.on('connection', (sock) => {
+	const socket = new Socket(sock);
+
+	socket.on('MY_MESSAGE', (msg) => {
+		console.log(`Type: ${msg.type}, Foo: ${msg.foo}`); // Type: MY_MESSAGE, Foo: something
+	});
 });
 ```
 
@@ -30,15 +35,20 @@ With Typescript:
 
 ```ts
 import { Socket } from '@nano-utils/web-socket';
+import WebSocket from 'ws';
 
 type Msgs = {
 	MY_MESSAGE: { type: 'MY_MESSAGE'; foo: string };
 };
 
-const socket = new Socket<Msgs, {}>('wss://example.com'); // second type parameter is for outgoing messages
+const wss = new WebSocket.Server({ port: 3000 }); // second type parameter is for outgoing messages
 
-socket.on('MY_MESSAGE', (evt) => {
-	console.log(`Type: ${evt.type}, Foo: ${evt.foo}`); // Type: MY_MESSAGE, Foo: something
+wss.on('connection', (sock) => {
+	const socket = new Socket<Msgs, {}>(sock);
+
+	socket.on('MY_MESSAGE', (msg) => {
+		console.log(`Type: ${msg.type}, Foo: ${msg.foo}`); // Type: MY_MESSAGE, Foo: something
+	});
 });
 ```
 
@@ -46,43 +56,54 @@ Sending Messages:
 
 ```ts
 import { Socket } from '@nano-utils/web-socket';
+import WebSocket from 'ws';
 
 type IMsgs = {
-	MY_MESSAGE: { type: 'MY_MESSAGE'; foo: string };
+	CONNECTION: { type: 'CONNECTION'; id: string };
 };
 
 type OMsgs = {
-	MY_OUTGOING_MESSAGE: { type: 'MY_OUTGOING_MESSAGE'; foo: string };
+	CONNECTED: { type: 'CONNECTED'; user: { id: string; name: string } };
 };
 
-const socket = new Socket<IMsgs, OMsgs>('wss://example.com');
+const wss = new WebSocket.Server('wss://example.com');
 
-socket.send({ type: 'MY_OUTGOING_MESSAGE', foo: 'bar' }); // Waiting for the socket to be open is automatically handled
+wss.on('connection', (sock) => {
+	const socket = new Socket<IMsgs, OMsgs>(sock);
+
+	socket.on('CONNECTION', (msg) => {
+		socket.send({ type: 'CONNECTED', user: { id: msg.id, name: 'foo' } });
+	});
+});
 ```
 
 Awaiting Messages:
 
 ```ts
 import { Socket } from '@nano-utils/web-socket';
+import WebSocket from 'ws';
 
 type IMsgs = {
-	MY_MESSAGE: { type: 'MY_MESSAGE'; foo: string };
+	CONNECTION: { type: 'CONNECTION'; id: string };
 };
 
-const socket = new Socket<IMsgs, {}>('wss://example.com');
+type OMsgs = {
+	CONNECTED: { type: 'CONNECTED'; user: { id: string; name: string } };
+};
 
-async function myFunc() {
-	await socket.await('MY_MESSAGE');
-	console.log('Received message');
-}
+const wss = new WebSocket.Server('wss://example.com');
 
-async function myFunc2() {
-	const msg = socket.await('MY_MESSAGE');
-	console.log('Received message', msg);
-}
+wss.on('connection', async (sock) => {
+	const socket = new Socket<IMsgs, OMsgs>(sock);
+
+	const msg = await socket.await('CONNECTION');
+
+	socket.send({ type: 'CONNECTED', user: { id: msg.id, name: 'foo' } });
+});
 ```
 
 ## Usage Notes:
 
--   Each message must have a type property, which is litstened to in the `on` method
--   If using typescript, each message's key in the message map must match the type property of the message
+-   Each message (both outgoing and incoming) must have a type property, which is litstened to in the `on` method
+-   If using typescript, each message's key in the message type map must match the type property of the message
+-   This package is designed to be paired with the [web-sockets](https://npmjs.org/packages/@nano-utils/web-sockets) library on the frontend, but any client that sends messages in json format with type properties will work
