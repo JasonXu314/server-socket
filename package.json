@@ -7,7 +7,8 @@
 	"author": "Jason Xu",
 	"license": "MIT",
 	"keywords": [
-		"WebSocket"
+		"WebSocket",
+		"Server"
 	],
 	"scripts": {
 		"test": "jest",
