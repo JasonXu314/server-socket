@@ -11,9 +11,7 @@
 	],
 	"scripts": {
 		"test": "jest",
-		"build": "tsc -b ./tsconfig.json",
-		"prepublish": "yarn build",
-		"publish": "npm publish"
+		"build": "tsc -b ./tsconfig.json"
 	},
 	"devDependencies": {
 		"@types/jest": "^27.0.2",
