@@ -1,0 +1,39 @@
+{
+	"name": "@nano-utils/server-socket",
+	"version": "1.0.0",
+	"description": "A lightweight wrapper library around the ws WebSocket API",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"author": "Jason Xu",
+	"license": "MIT",
+	"keywords": [
+		"WebSocket"
+	],
+	"scripts": {
+		"test": "jest",
+		"build": "tsc -b ./tsconfig.json",
+		"prepublish": "yarn build",
+		"publish": "npm publish"
+	},
+	"devDependencies": {
+		"@types/jest": "^27.0.2",
+		"@types/ws": "^8.2.0",
+		"@typescript-eslint/eslint-plugin": "^5.0.0",
+		"@typescript-eslint/parser": "^5.0.0",
+		"eslint": "^8.0.1",
+		"jest": "^27.0.6",
+		"ts-jest": "^27.0.6",
+		"typescript": "^4.4.3"
+	},
+	"dependencies": {
+		"@nano-utils/evt-src": "^1.2.4"
+	},
+	"private": false,
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/JasonXu314/server-socket.git"
+	},
+	"peerDependencies": {
+		"ws": "^8.2.3"
+	}
+}
