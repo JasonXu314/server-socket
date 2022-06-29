@@ -5,19 +5,19 @@ A lightweight wrapper library around the ws WebSocket API
 ## Installation
 
 ```
-npm i @nano-utils/web-socket
+npm i @nano-utils/server-socket
 ```
 
 or
 
 ```
-yarn add @nano-utils/web-socket
+yarn add @nano-utils/server-socket
 ```
 
 ## Usage
 
 ```js
-import { Socket } from '@nano-utils/web-socket';
+import { Socket } from '@nano-utils/server-socket';
 import WebSocket from 'ws';
 
 const wss = new WebSocket.Server({ port: 3000 });
@@ -34,7 +34,7 @@ wss.on('connection', (sock) => {
 With Typescript:
 
 ```ts
-import { Socket } from '@nano-utils/web-socket';
+import { Socket } from '@nano-utils/server-socket';
 import WebSocket from 'ws';
 
 type Msgs = {
@@ -55,7 +55,7 @@ wss.on('connection', (sock) => {
 Sending Messages:
 
 ```ts
-import { Socket } from '@nano-utils/web-socket';
+import { Socket } from '@nano-utils/server-socket';
 import WebSocket from 'ws';
 
 type IMsgs = {
@@ -80,7 +80,7 @@ wss.on('connection', (sock) => {
 Awaiting Messages:
 
 ```ts
-import { Socket } from '@nano-utils/web-socket';
+import { Socket } from '@nano-utils/server-socket';
 import WebSocket from 'ws';
 
 type IMsgs = {

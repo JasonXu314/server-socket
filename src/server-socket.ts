@@ -3,12 +3,17 @@ import WebSocket from 'ws';
 import { SocketMsg } from './types';
 
 /**
- * A wrapper class around the web WebSocket API
+ * A wrapper class around the ws WebSocket API
  */
-export class Socket<IM extends { [K in IT]: SocketMsg<K> }, OM extends { [K in OT]: SocketMsg<K> }, IT extends string = KeyOf<IM>, OT extends string = KeyOf<OM>> {
+export class Socket<
+	IM extends { [K in IT]: SocketMsg<K> },
+	OM extends { [K in OT]: SocketMsg<K> },
+	IT extends string = KeyOf<IM>,
+	OT extends string = KeyOf<OM>
+> {
 	private _socket: WebSocket;
-	private msgQueue: OM[KeyOf<OM>][];
-	private events: EventSrc<{ [K in KeyOf<IM>]: [IM[K]] }>;
+	private _msgQueue: OM[KeyOf<OM>][];
+	private _events: EventSrc<{ [K in KeyOf<IM>]: [IM[K]] }>;
 
 	/**
 	 * Creates a new Socket object with the underlying WebSocket as the given WebSocket
@@ -16,18 +21,25 @@ export class Socket<IM extends { [K in IT]: SocketMsg<K> }, OM extends { [K in O
 	 */
 	constructor(socket: WebSocket) {
 		this._socket = socket;
-		this.msgQueue = [];
-		this.events = new EventSrc();
+		this._msgQueue = [];
+		this._events = new EventSrc();
 
-		this._socket.addEventListener('open', () => {
-			this.msgQueue.forEach((msg) => this._socket.send(JSON.stringify(msg)));
-			this.msgQueue = [];
-		});
+		this._socket
+			.on('open', () => {
+				this._msgQueue.forEach((msg) => this._socket.send(JSON.stringify(msg)));
+				this._msgQueue = [];
+			})
+			.on('message', (data) => {
+				if (Array.isArray(data)) {
+					const msg = data.reduce((acc, cur) => acc + cur.toString(), '');
+					const msgObj = JSON.parse(msg) as IM[KeyOf<IM>];
 
-		this._socket.addEventListener('message', (evt) => {
-			const msg = JSON.parse(evt.data as string) as IM[KeyOf<IM>];
-			this.events.dispatch(msg.type as KeyOf<IM>, msg);
-		});
+					this._events.dispatch(msgObj.type as KeyOf<IM>, msgObj);
+				} else {
+					const msg = JSON.parse(data.toString()) as IM[KeyOf<IM>];
+					this._events.dispatch(msg.type as KeyOf<IM>, msg);
+				}
+			});
 	}
 
 	/**
@@ -36,7 +48,7 @@ export class Socket<IM extends { [K in IT]: SocketMsg<K> }, OM extends { [K in O
 	 */
 	public send<M extends KeyOf<OM>>(msg: OM[M]): void {
 		if (this._socket.readyState === WebSocket.CONNECTING) {
-			this.msgQueue.push(msg);
+			this._msgQueue.push(msg);
 		} else if (this._socket.readyState === WebSocket.OPEN) {
 			this._socket.send(JSON.stringify(msg));
 		}
@@ -49,7 +61,7 @@ export class Socket<IM extends { [K in IT]: SocketMsg<K> }, OM extends { [K in O
 	 * @returns a function that will remove the listener upon call
 	 */
 	public on<M extends KeyOf<IM>>(msgType: M, listener: EvtListener<[IM[M]]>): Unsubscriber {
-		return this.events.on<M>(msgType, listener);
+		return this._events.on<M>(msgType, listener);
 	}
 
 	/**
@@ -59,7 +71,7 @@ export class Socket<IM extends { [K in IT]: SocketMsg<K> }, OM extends { [K in O
 	 * @returns a function that will remove the listener upon call
 	 */
 	public once<M extends KeyOf<IM>>(msgType: M, listener: EvtListener<[IM[M]]>): Unsubscriber {
-		const unsubscribe = this.events.on<M>(msgType, (msg: IM[M]) => {
+		const unsubscribe = this._events.on<M>(msgType, (msg: IM[M]) => {
 			listener(msg);
 			unsubscribe();
 		});
